@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漫遊簡報</title>
+<!-- 漫遊簡報 Wander Deck · MIT License · 這個檔案不用改，所有設定都在 deck.json -->
+<style>
+
+  :root {
+    --paper: #f4ebdc;
+    --ink: #4a3a2b;
+    --ink-soft: #7a6552;
+    --accent: #a8583a;
+    --card: #fffdf8;
+    --shadow: 0 2px 4px rgba(74, 58, 43, .12), 0 10px 24px rgba(74, 58, 43, .16);
+    --serif: "Songti TC", "Noto Serif TC", "PMingLiU", serif;
+    --sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--paper) var(--bg, none) center / cover no-repeat fixed;
+    color: var(--ink);
+    font-family: var(--sans);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ---------- 頁面 ---------- */
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    padding: 7vh 9vw 10vh;
+    scrollbar-width: none;
+  }
+  #stage::-webkit-scrollbar { display: none; }
+  .view { animation: view-in .45s cubic-bezier(.2, .7, .2, 1); }
+  @keyframes view-in { from { opacity: 0; transform: translateY(14px) scale(.985); } }
+
+  .home {
+    min-height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 0 4vh;
+  }
+  .home-head { text-align: center; margin: 0 0 6vh; }
+  .logo {
+    width: clamp(90px, 11vw, 150px);
+    opacity: .9;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(28px, 3.6vw, 52px);
+    letter-spacing: .28em;
+    margin: .3em 0 0;
+    padding-left: .28em;          /* 抵銷字距讓標題真正置中 */
+  }
+  .subtitle {
+    color: var(--ink-soft);
+    font-size: clamp(13px, 1.1vw, 16px);
+    letter-spacing: .3em;
+    margin-top: .6em;
+  }
+
+  /* ---------- 主題小卡 ---------- */
+  .topics {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 5vh 2.4vw;
+  }
+  .topic {
+    width: clamp(130px, 11vw, 210px);
+    cursor: pointer;
+    text-align: center;
+    transform: rotate(var(--r));
+    transition: transform .35s cubic-bezier(.2, .7, .2, 1);
+  }
+  .topic:hover { transform: rotate(0deg) translateY(-6px) scale(1.04); }
+  .stack { position: relative; aspect-ratio: 4 / 3.4; }
+  .stack img {
+    position: absolute; inset: 0;
+    width: 100%; height: 88%;
+    object-fit: cover;
+    background: var(--card);
+    border: 7px solid var(--card);
+    border-bottom-width: 18px;
+    box-shadow: var(--shadow);
+    transition: transform .35s cubic-bezier(.2, .7, .2, 1);
+  }
+  .stack img:nth-child(1) { transform: rotate(-7deg) translate(-6%, 2%); }
+  .stack img:nth-child(2) { transform: rotate(6deg) translate(6%, 1%); }
+  .stack img:nth-child(3) { transform: rotate(-1deg); }
+  .topic:hover .stack img:nth-child(1) { transform: rotate(-12deg) translate(-14%, 3%); }
+  .topic:hover .stack img:nth-child(2) { transform: rotate(11deg) translate(14%, 2%); }
+  .topic-name {
+    font-family: var(--serif);
+    font-size: clamp(17px, 1.5vw, 22px);
+    font-weight: 600;
+    letter-spacing: .12em;
+    margin-top: 14px;
+    white-space: nowrap;
+  }
+  /* 名稱比較長的主題：字小一點、字距窄一點，可以比小卡寬，一律不斷行 */
+  .topic-name.long {
+    font-size: clamp(15px, 1.25vw, 19px);
+    letter-spacing: .05em;
+    margin-left: -30%; margin-right: -30%;
+  }
+  .topic-count { color: var(--ink-soft); font-size: 13px; margin-top: 4px; letter-spacing: .1em; }
+
+  /* ---------- 主題內頁 ---------- */
+  .topic-head {
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+    margin-bottom: 4vh;
+  }
+  .back {
+    font: inherit; font-size: 15px;
+    color: var(--ink-soft);
+    background: rgba(255, 253, 248, .7);
+    border: 1px solid rgba(74, 58, 43, .2);
+    border-radius: 999px;
+    padding: 6px 16px;
+    cursor: pointer;
+    letter-spacing: .08em;
+  }
+  .back:hover { color: var(--ink); background: var(--card); }
+  .topic-head h2 {
+    font-family: var(--serif);
+    font-size: clamp(26px, 3vw, 44px);
+    letter-spacing: .2em;
+    margin: 0;
+  }
+  .crumb { color: var(--ink-soft); font-size: 15px; letter-spacing: .1em; }
+  .topic-view .topics { justify-content: flex-start; margin-bottom: 6vh; }
+  .topic-view.only-places { min-height: 100%; display: flex; flex-direction: column; }
+  .only-places .topics { flex: 1; align-content: center; justify-content: center; margin-bottom: 8vh; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(100px, 8.5vw, 160px), 1fr));
+    gap: 3.5vh 2vw;
+    align-items: center;
+  }
+  .photo {
+    position: relative;
+    background: var(--card);
+    padding: 6px 6px 16px;
+    box-shadow: var(--shadow);
+    cursor: zoom-in;
+    transform: rotate(var(--r));
+    transition: transform .3s cubic-bezier(.2, .7, .2, 1), box-shadow .3s;
+  }
+  .photo:hover {
+    transform: rotate(0deg) scale(1.07);
+    box-shadow: 0 4px 8px rgba(74, 58, 43, .15), 0 18px 36px rgba(74, 58, 43, .22);
+    z-index: 2;
+  }
+  .photo img { display: block; width: 100%; height: auto; }
+  .photo.is-open img { visibility: hidden; }
+  .play {
+    position: absolute; left: 50%; top: calc(50% - 5px);
+    width: 44px; height: 44px; margin: -22px 0 0 -22px;
+    border-radius: 50%;
+    background: rgba(40, 30, 20, .55);
+    display: grid; place-items: center;
+    pointer-events: none;
+  }
+  .play::after {
+    content: ""; margin-left: 4px;
+    border-left: 14px solid #fff;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+  }
+
+  /* ---------- 放大 ---------- */
+  #lightbox {
+    position: fixed; inset: 0;
+    background: rgba(38, 29, 20, .72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .35s;
+    z-index: 10;
+    cursor: zoom-out;
+  }
+  #lightbox.on { opacity: 1; pointer-events: auto; }
+  .big {
+    position: fixed;
+    transform-origin: 0 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    background: #111;
+    z-index: 11;
+    object-fit: contain;
+  }
+  .big.moving { transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+
+  /* ---------- 放大鏡 ---------- */
+  .big.zoomable { cursor: none; }
+  #lens {
+    position: fixed; z-index: 13;
+    width: 280px; height: 280px;
+    margin: -140px 0 0 -140px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .95);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .15), 0 12px 36px rgba(0, 0, 0, .45);
+    background: #222 no-repeat;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(.6);
+    transition: opacity .15s, transform .15s;
+  }
+  #lens.on { opacity: 1; transform: none; }
+
+  #fs {
+    position: fixed; top: 14px; right: 14px; z-index: 5;
+    font: inherit; font-size: 13px; letter-spacing: .1em;
+    color: var(--ink-soft);
+    background: rgba(255, 253, 248, .6);
+    border: 1px solid rgba(74, 58, 43, .15);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    opacity: .5;
+    transition: opacity .2s;
+  }
+  #fs:hover { opacity: 1; }
+  :fullscreen #fs { display: none; }
+
+  /* ---------- 開場（線性的前三頁） ---------- */
+  #intro {
+    position: fixed; inset: 0; z-index: 8;
+    background: #efe6d6;
+    cursor: pointer;
+    display: none;
+  }
+  #intro.on { display: block; }
+  #intro > .page {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity .6s ease;
+  }
+  #intro > .page.show { opacity: 1; }
+
+  #to-intro {
+    position: fixed; top: 14px; right: 96px; z-index: 5;
+    font: inherit; font-size: 13px; letter-spacing: .1em;
+    color: var(--ink-soft);
+    background: rgba(255, 253, 248, .6);
+    border: 1px solid rgba(74, 58, 43, .15);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    opacity: .5;
+    transition: opacity .2s;
+    display: none;
+  }
+  #to-intro:hover { opacity: 1; }
+  body.at-home #to-intro { display: block; }
+  #intro.on ~ #fs { z-index: 9; }
+
+  /* ---------- 展示牆 ---------- */
+  .wall-view { min-height: 100%; display: flex; flex-direction: column; }
+  .wall-view .topic-head { margin-bottom: 2vh; }
+  .wall {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    gap: 2.6vw;
+    padding-bottom: 3vh;
+  }
+  .wall-item {
+    flex: var(--a) 1 0;
+    max-width: calc(var(--a) * 66vh);   /* 高度上限 66vh，三張維持一樣高 */
+    background: var(--card);
+    padding: 10px 10px 30px;
+    box-shadow: 0 4px 10px rgba(74, 58, 43, .16), 0 18px 40px rgba(74, 58, 43, .22);
+    transform: rotate(var(--r));
+  }
+  .wall-item img { display: block; width: 100%; aspect-ratio: var(--a); object-fit: cover; }
+
+  /* ---------- 音樂按鈕（每一頁都在右下角） ---------- */
+  #music {
+    position: fixed; right: 18px; bottom: 18px; z-index: 20;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(74, 58, 43, .2);
+    background: rgba(255, 253, 248, .92);
+    box-shadow: 0 2px 8px rgba(40, 30, 20, .25);
+    color: var(--ink);
+    cursor: pointer;
+    opacity: .85;
+    transition: opacity .2s, background .2s;
+  }
+  #music[hidden], #volume[hidden] { display: none; }
+
+  /* 音量拉桿：在播放鈕左邊，已調的部分用深色 */
+  #volume {
+    position: fixed; right: 74px; bottom: 32px; z-index: 20;
+    width: 120px; height: 16px;
+    margin: 0;
+    -webkit-appearance: none; appearance: none;
+    background: transparent;
+    cursor: pointer;
+    opacity: .85;
+    transition: opacity .2s;
+  }
+  #volume:hover { opacity: 1; }
+  #volume::-webkit-slider-runnable-track {
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(var(--ink), var(--ink)) 0 / var(--v, 50%) 100% no-repeat, rgba(255, 253, 248, .92);
+    box-shadow: 0 1px 5px rgba(40, 30, 20, .3);
+  }
+  #volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px; margin-top: -5px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--ink);
+    box-shadow: 0 1px 4px rgba(40, 30, 20, .35);
+  }
+  #volume::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(255, 253, 248, .92); }
+  #volume::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--ink); }
+  #volume::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); }
+  #music:hover { opacity: 1; background: var(--card); }
+  #music svg { width: 20px; height: 20px; fill: currentColor; grid-area: 1 / 1; }
+  #music .i-pause { display: none; }
+  #music.playing .i-pause { display: block; }
+  #music.playing .i-play { display: none; }
+
+  .empty { text-align: center; margin-top: 30vh; font-size: 18px; line-height: 2; }
+  /* ---------- 開場動畫頁（scene） ---------- */
+  .scene { overflow: hidden; }
+  .scene-box {
+    position: absolute; left: 50%; top: 50%;
+    width: max(100vw, calc(100vh * var(--ar)));
+    aspect-ratio: var(--ar);
+    transform: translate(-50%, -50%);
+  }
+  .scene-box > * { position: absolute; display: block; }
+  .scene-box > .bg { inset: 0; width: 100%; height: 100%; }
+  .scene-box > .layer > img { display: block; width: 100%; }
+  .scene:not(.show) * { animation-play-state: paused !important; }
+  .scene.show .fx-breeze       { filter: url(#breeze-a); }
+  .scene.show .fx-breeze-soft  { filter: url(#breeze-b); }
+  .scene.show .fx-flutter      { filter: url(#flutter); }
+
+  /* 鐘擺：吊燈、招牌、風鈴 */
+  .fx-swing { transform-origin: var(--origin, 50% 0);
+    animation: swing var(--speed, 4s) ease-in-out var(--delay, 0s) infinite alternate; }
+  @keyframes swing { from { transform: rotate(calc(var(--amount, 1.2deg) * -1)); } to { transform: rotate(var(--amount, 1.2deg)); } }
+  /* 行走：駱駝、行人、車；一邊前進一邊上下晃，走完淡出再重來 */
+  .fx-walk { animation: walk var(--speed, 16s) linear var(--delay, 0s) infinite; }
+  .fx-walk > img { animation: gait .75s ease-in-out infinite alternate; }
+  @keyframes walk {
+    0%   { transform: translateX(0); opacity: 0; }
+    5%, 92% { opacity: 1; }
+    100% { transform: translateX(var(--amount, 30%)); opacity: 0; }
+  }
+  @keyframes gait { from { transform: translateY(0); } to { transform: translateY(-1.2%); } }
+  /* 漂浮：雲、熱氣球、紙片 */
+  .fx-float { animation: float var(--speed, 6s) ease-in-out var(--delay, 0s) infinite alternate; }
+  @keyframes float { from { transform: translateY(0); } to { transform: translateY(calc(var(--amount, 2%) * -1)); } }
+
+  /* 標題：原圖藏起來佔位置，畫面上看到的是 canvas */
+  .title > img { display: block; width: 100%; }
+  .title.flag > img { visibility: hidden; }
+  .title canvas { position: absolute; left: 0; top: -6%; width: 100%; height: 112%; }
+
+  /* 拍立得：沒給相框圖就用 CSS 畫一張 */
+  .card { aspect-ratio: 1122 / 1402; }
+  .card > * { position: absolute; display: block; }
+  .card.css-frame {
+    background: #fbf7ee;
+    box-shadow: 0 3px 8px rgba(40, 30, 20, .18), 0 16px 34px rgba(40, 30, 20, .22);
+  }
+  .card.css-frame .pic { left: 7%; top: 5.6%; width: 86%; height: 72%; object-fit: cover;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
+  .card .pic { object-fit: cover; }
+  .card .frame { inset: 0; width: 100%; height: 100%; }
+  .card .caption { left: 0; right: 0; top: 81%; text-align: center; color: var(--ink);
+    font-family: "Snell Roundhand", "Apple Chancery", var(--serif); font-size: min(1.6vw, 2.8vh); }
+
+  /* ---------- 結尾頁（outro）：QR code ---------- */
+  #to-outro {
+    position: fixed; left: 18px; bottom: 18px; z-index: 20;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(74, 58, 43, .2);
+    background: rgba(255, 253, 248, .92);
+    box-shadow: 0 2px 8px rgba(40, 30, 20, .25);
+    color: var(--ink);
+    cursor: pointer;
+    opacity: .85;
+    transition: opacity .2s, background .2s;
+  }
+  #to-outro[hidden] { display: none; }
+  #to-outro:hover { opacity: 1; background: var(--card); }
+  #to-outro svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+  body.at-outro #to-outro { display: none; }
+
+  #outro {
+    position: fixed; inset: 0; z-index: 15;
+    display: none;
+    align-items: center; justify-content: center;
+    gap: 6vw;
+    padding: 6vh 8vw;
+    background: color-mix(in srgb, var(--paper) 55%, transparent);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  body.at-outro #outro { display: flex; animation: view-in .5s cubic-bezier(.2, .7, .2, 1); }
+  #outro .back { position: absolute; left: 3vw; top: 4vh; }
+  #outro .card { position: relative; width: min(30vw, 50vh); transform: rotate(-3deg); flex: none; }
+  #outro .card .qr { object-fit: contain; padding: 7%; background: #fffdf8; image-rendering: pixelated; }
+  #outro .card .caption { font-size: min(2.6vw, 4.3vh); top: 80%; }
+  .outro-text { max-width: 36vw; color: var(--ink); }
+  .outro-text .outro-logo { width: min(11vw, 18vh); opacity: .9; display: block; margin-bottom: 3vh; }
+  .outro-text h2 { font-family: var(--serif); font-weight: 600; font-size: min(3.4vw, 6vh);
+    letter-spacing: .18em; margin: 0 0 1.6vh; }
+  .outro-text .tagline { font-family: var(--serif); font-style: italic; font-size: min(1.5vw, 2.6vh);
+    letter-spacing: .08em; color: var(--ink-soft); margin: 0 0 4vh; }
+  .outro-text .line { width: 5em; height: 1px; background: var(--ink-soft); opacity: .5; margin-bottom: 3vh; }
+  .outro-text .cta { font-size: min(1.25vw, 2.2vh); letter-spacing: .2em; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="lightbox"></div>
+<div id="lens"></div>
+<div id="intro"></div>
+<section id="outro"></section>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- 微風：雜訊圖慢慢變形，拿來推動樹葉、旗幟的像素 -->
+  <filter id="breeze-a" x="-2%" y="-2%" width="104%" height="104%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.010 0.018" numOctaves="2" seed="4">
+      <animate attributeName="baseFrequency" dur="11s" repeatCount="indefinite"
+               values="0.010 0.018;0.0112 0.0195;0.010 0.018" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G">
+      <animate attributeName="scale" dur="5.5s" repeatCount="indefinite" values="5;11;5"
+               calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+    </feDisplacementMap>
+  </filter>
+  <filter id="breeze-b" x="-2%" y="-2%" width="104%" height="104%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.014 0.02" numOctaves="2" seed="9">
+      <animate attributeName="baseFrequency" dur="9s" repeatCount="indefinite"
+               values="0.014 0.02;0.0155 0.0215;0.014 0.02" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" scale="7" xChannelSelector="R" yChannelSelector="G">
+      <animate attributeName="scale" dur="6.5s" repeatCount="indefinite" values="4;9;4"
+               calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+    </feDisplacementMap>
+  </filter>
+  <filter id="flutter" x="-2%" y="-2%" width="104%" height="104%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.026 0.036" numOctaves="1" seed="2">
+      <animate attributeName="baseFrequency" dur="3.2s" repeatCount="indefinite"
+               values="0.026 0.036;0.029 0.04;0.026 0.036" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" scale="11" xChannelSelector="R" yChannelSelector="G">
+      <animate attributeName="scale" dur="2.2s" repeatCount="indefinite" values="6;14;6"
+               calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+    </feDisplacementMap>
+  </filter>
+</svg>
+<button id="to-outro" hidden>
+  <svg viewBox="0 0 24 24"><path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16"/><rect x="7" y="7" width="3.6" height="3.6" rx=".6"/><rect x="13.4" y="7" width="3.6" height="3.6" rx=".6"/><rect x="7" y="13.4" width="3.6" height="3.6" rx=".6"/><path d="M14 14.5v.1M16.5 14h.5M14.5 17h2.5"/></svg>
+</button>
+<button id="to-intro"></button>
+<button id="fs"></button>
+<input id="volume" type="range" min="0" max="100" value="50" autocomplete="off" hidden>
+<button id="music" hidden>
+  <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+  <svg class="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5.5" width="3.6" height="13" rx="1"/><rect x="13.9" y="5.5" width="3.6" height="13" rx="1"/></svg>
+</button>
+
+<script src="_wander/data.js"></script>
+<script>
+(() => {
+  const data = window.WANDER;
+  const stage = document.getElementById("stage");
+  const lightbox = document.getElementById("lightbox");
+
+  // 介面文字：deck.json 的 "text" 可以蓋掉任何一句（例如換成英文）
+  const T = Object.assign({
+    home: "← 主畫面", toIntro: "← 開場", fullscreen: "全螢幕", back: "← 返回",
+    places: n => `${n} 個地方`, photos: n => `${n} 張`, videos: n => `${n} 部影片`,
+    volume: "音量", playPause: "播放／暫停音樂", outro: "QR code",
+    missing: "找不到簡報資料。<br>請先點兩下資料夾裡的「更新簡報.command」。",
+  }, data && data.text || {});
+  const say = (k, n) => typeof T[k] === "function" ? T[k](n) : String(T[k]).replace("{n}", n);
+
+  // 檔名裡有中文、空白、& 等字元，要逐段編碼
+  const url = p => p.split("/").map(encodeURIComponent).join("/");
+  const el = (tag, cls, html) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // 每張照片一個固定的小角度，重新整理也不會亂跳
+  const tilt = (s, max) => {
+    let h = 0;
+    for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0;
+    return ((Math.abs(h) % 1000) / 1000 * 2 - 1) * max;
+  };
+  const countType = (t, type) => t.items.filter(i => i.type === type).length
+    + t.children.reduce((n, c) => n + countType(c, type), 0);
+  const countLabel = t => {
+    if (t.children.length) return say("places", t.children.length);
+    const p = countType(t, "photo"), v = countType(t, "video");
+    return [p && say("photos", p), v && say("videos", v)].filter(Boolean).join("・");
+  };
+
+  if (!data) {
+    stage.innerHTML = `<div class="empty">${T.missing}</div>`;
+    return;
+  }
+  document.title = data.title;
+  document.documentElement.lang = data.lang || "zh-Hant-TW";
+  const themeVars = { paper: "--paper", ink: "--ink", inkSoft: "--ink-soft", card: "--card" };
+  Object.entries(data.theme || {}).forEach(([k, v]) => themeVars[k] && document.documentElement.style.setProperty(themeVars[k], v));
+  if (data.background) document.body.style.setProperty("--bg", `url("${url(data.background)}")`);
+  document.getElementById("to-intro").textContent = T.toIntro;
+  document.getElementById("fs").textContent = T.fullscreen;
+
+  // ---------- 網址 #/主題/子主題 對應到畫面 ----------
+  const findPath = ids => {
+    const path = [];
+    let list = data.topics;
+    for (const id of ids) {
+      const t = list.find(x => x.id === id);
+      if (!t) break;
+      path.push(t);
+      list = t.children;
+    }
+    return path;
+  };
+  const hashOf = path => "#/" + path.map(t => encodeURIComponent(t.id)).join("/");
+  const go = path => { location.hash = hashOf(path); };
+  const placeAt = (node, [l, t, w]) => Object.assign(node.style, { left: l + "%", top: t + "%", width: w + "%" });
+
+  // ---------- 標題像旗子飄：每一欄像素依正弦波上下移，波由左往右跑 ----------
+  // 不要改回「切直條」或 SVG 扭曲：前者有接縫細線、後者字形會扭動（兩種都試過）
+  const WAVE = { period: 4.6, spread: 5.2, amp0: 0.002, amp1: 0.011, light: 0.08, pad: 0.06 };
+  function flagCanvas(img, holder, page, opt = {}) {
+    const w = Object.assign({}, WAVE, opt);
+    const cv = document.createElement("canvas");
+    const ctx = cv.getContext("2d");
+    new ResizeObserver(() => {
+      const r = holder.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+      cv.width = Math.round(r.width * dpr);
+      cv.height = Math.round(r.height * (1 + 2 * w.pad) * dpr);
+    }).observe(holder);
+    const draw = now => {
+      requestAnimationFrame(draw);
+      if (!page.classList.contains("show") || !img.complete || !img.naturalWidth || !cv.width) return;
+      const W = cv.width, H = cv.height, th = H / (1 + 2 * w.pad), top = th * w.pad;
+      const iw = img.naturalWidth, ih = img.naturalHeight, t = now / 1000;
+      const phase = xf => 2 * Math.PI * (t - xf * w.spread) / w.period;
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "source-over";
+      for (let x = 0; x < W; x++) {
+        const xf = x / W;
+        const dy = -(w.amp0 + xf * w.amp1) * th * Math.cos(phase(xf));
+        ctx.drawImage(img, xf * iw, 0, iw / W, ih, x, top + dy, 1, th);
+      }
+      // 光影只畫在字上：波峰疊亮、波谷疊暗
+      ctx.globalCompositeOperation = "source-atop";
+      const lite = ctx.createLinearGradient(0, 0, W, 0), dark = ctx.createLinearGradient(0, 0, W, 0);
+      for (let k = 0; k <= 48; k++) {
+        const xf = k / 48, c = Math.cos(phase(xf)) * w.light;
+        lite.addColorStop(xf, `rgba(255,248,230,${Math.max(c, 0)})`);
+        dark.addColorStop(xf, `rgba(0,0,0,${Math.max(-c, 0)})`);
+      }
+      ctx.fillStyle = lite; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = dark; ctx.fillRect(0, 0, W, H);
+    };
+    requestAnimationFrame(draw);
+    return cv;
+  }
+
+  // 拍立得：有相框圖就把照片墊在框後面的洞裡；沒有就用 CSS 畫的相紙
+  function polaroid(photoSrc, c = {}) {
+    const card = el("div", "card");
+    const pic = el("img", "pic");
+    pic.src = url(photoSrc);
+    pic.alt = "";
+    if (c.frame) {
+      const [l, t, w, h] = c.hole || [14.26, 10.70, 71.48, 64.84];
+      Object.assign(pic.style, { left: l + "%", top: t + "%", width: w + "%", height: h + "%" });
+      const frame = el("img", "frame");
+      frame.src = url(c.frame);
+      frame.alt = "";
+      card.append(pic, frame);
+    } else {
+      card.classList.add("css-frame");
+      card.append(pic);
+    }
+    if (c.caption) card.append(el("div", "caption", esc(c.caption)));
+    return card;
+  }
+
+  // ---------- 開場動畫頁 ----------
+  function buildScene(p) {
+    const sc = data.scenes[p.scene];
+    const page = el("div", "page scene");
+    const box = el("div", "scene-box");
+    const [W, H] = sc.size;
+    box.style.setProperty("--ar", W / H);
+    const bg = el("img", "bg");
+    bg.src = url(sc.background);
+    box.append(bg);
+    (sc.layers || []).forEach((l, i) => {
+      const node = el("div", "layer");
+      const img = el("img");
+      img.src = url(l.src);
+      img.alt = "";
+      node.append(img);
+      const [x, y, w] = l.box;
+      Object.assign(node.style, { left: x / W * 100 + "%", top: y / H * 100 + "%", width: w / W * 100 + "%" });
+      if (l.effect && l.effect !== "none") node.classList.add("fx-" + l.effect);
+      if (l.speed) node.style.setProperty("--speed", l.speed + "s");
+      if (l.amount != null) node.style.setProperty("--amount", l.amount + (l.effect === "swing" ? "deg" : "%"));
+      if (l.origin) node.style.setProperty("--origin", l.origin);
+      node.style.setProperty("--delay", (l.delay != null ? l.delay : -(i * 1.3 % 5)) + "s");
+      box.append(node);
+    });
+    (p.cards || []).forEach(c => {
+      const card = polaroid(c.photo, c);
+      placeAt(card, c.at);
+      card.style.transform = `rotate(${c.rot || 0}deg)`;
+      box.append(card);
+    });
+    if (p.title && p.title.src) {
+      const title = el("div", "title");
+      placeAt(title, p.title.at || [20, 30, 60]);
+      const timg = el("img");
+      timg.src = url(p.title.src);
+      timg.alt = p.title.alt || "";
+      title.append(timg);
+      if ((p.title.effect || "flag") === "flag") {
+        title.classList.add("flag");
+        title.append(flagCanvas(timg, title, page, p.title.wave));
+      }
+      box.append(title);
+    }
+    page.append(box);
+    return page;
+  }
+
+  // ---------- 開場：照順序一頁一頁，最後一頁再往下就進主畫面 ----------
+  const introBox = document.getElementById("intro");
+  const intro = (data.intro || []).map(p => {
+    const node = p.type === "scene" ? buildScene(p) : Object.assign(el("img", "page"), { src: url(p.src), alt: "" });
+    introBox.append(node);
+    return node;
+  });
+  const introPage = () => {
+    if (!intro.length) return 0;
+    if (location.hash === "" || location.hash === "#") return 1;
+    const m = location.hash.match(/^#intro\/(\d+)$/);
+    return m ? Math.min(Math.max(+m[1], 1), intro.length) : 0;
+  };
+  const introNext = n => { location.hash = n < intro.length ? `#intro/${n + 1}` : "#/"; };
+  const introPrev = n => { if (n > 1) location.hash = `#intro/${n - 1}`; };
+  introBox.addEventListener("click", () => introNext(introPage()));
+  document.getElementById("to-intro").onclick = () => { location.hash = "#intro/1"; };
+
+  function topicCard(t, path) {
+    const card = el("div", "topic");
+    card.style.setProperty("--r", tilt(t.id, 4).toFixed(2) + "deg");
+    const stack = el("div", "stack");
+    // 反過來疊，第一張在最上面
+    (t.covers || []).slice(0, 3).reverse().forEach(c => {
+      const img = el("img");
+      img.src = url(c);
+      img.alt = "";
+      img.loading = "lazy";
+      stack.append(img);
+    });
+    card.append(stack,
+      el("div", t.name.length > 5 ? "topic-name long" : "topic-name", esc(t.name)),
+      el("div", "topic-count", countLabel(t)));
+    card.onclick = () => go([...path, t]);
+    return card;
+  }
+
+  function renderHome() {
+    const v = el("div", "view home");
+    const head = el("div", "home-head");
+    if (data.logo) {
+      const logo = el("img", "logo");
+      logo.src = url(data.logo);
+      logo.alt = "";
+      head.append(logo);
+    }
+    head.append(el("h1", null, esc(data.title)));
+    if (data.subtitle) head.append(el("div", "subtitle", esc(data.subtitle)));
+    const topics = el("div", "topics");
+    data.topics.forEach(t => topics.append(topicCard(t, [])));
+    v.append(head, topics);
+    return v;
+  }
+
+  let current = [];   // 目前主題內可以左右切換的項目
+
+  function renderTopic(path) {
+    const t = path[path.length - 1];
+    const v = el("div", t.items.length ? "view topic-view" : "view topic-view only-places");
+    const head = el("div", "topic-head");
+    const back = el("button", "back", path.length > 1 ? `← ${esc(path[path.length - 2].name)}` : esc(T.home));
+    back.onclick = () => go(path.slice(0, -1));
+    head.append(back, el("h2", null, esc(t.name)));
+    if (path.length > 1) head.append(el("span", "crumb", esc(path.slice(0, -1).map(p => p.name).join(" · "))));
+    v.append(head);
+
+    if (t.children.length) {
+      const topics = el("div", "topics");
+      t.children.forEach(c => topics.append(topicCard(c, path)));
+      v.append(topics);
+    }
+    if (t.layout === "wall") {
+      v.classList.add("wall-view");
+      v.append(renderWall(t));
+      return v;
+    }
+    const grid = el("div", "grid");
+    current = t.items.map((item, i) => {
+      const box = el("div", "photo");
+      box.style.setProperty("--r", tilt(item.thumb || item.src, 3).toFixed(2) + "deg");
+      const img = el("img");
+      if (item.thumb) img.src = url(item.thumb);
+      else { img.style.aspectRatio = item.ratio; img.style.background = "#2a2520"; }
+      img.alt = "";
+      img.loading = i < 24 ? "eager" : "lazy";
+      box.append(img);
+      if (item.type === "video") box.append(el("span", "play"));
+      box.onclick = () => openItem(i);
+      grid.append(box);
+      return { item, box, img };
+    });
+    v.append(grid);
+    return v;
+  }
+
+  // 展示牆：照片一樣高並排，寬度照各自比例；點了不會再放大
+  function renderWall(t) {
+    const wall = el("div", "wall");
+    t.items.filter(i => i.type === "photo").forEach(item => {
+      const box = el("div", "wall-item");
+      box.style.setProperty("--a", item.ratio || 1);
+      box.style.setProperty("--r", tilt(item.thumb, 1.5).toFixed(2) + "deg");
+      const img = el("img");
+      img.src = url(item.thumb);
+      const hi = new Image();
+      hi.onload = () => { img.src = hi.src; };
+      hi.src = url(item.src);
+      img.alt = "";
+      box.append(img);
+      wall.append(box);
+    });
+    return wall;
+  }
+
+  // ---------- 結尾頁：QR code（左下角按鈕進入） ----------
+  const outroBox = document.getElementById("outro");
+  const toOutro = document.getElementById("to-outro");
+  let beforeOutro = "";
+  const leaveOutro = () => { location.hash = beforeOutro && beforeOutro !== "#outro" ? beforeOutro : "#/"; };
+  if (data.outro && data.outro.qr) {
+    const o = data.outro;
+    const back = el("button", "back", esc(T.back));
+    back.onclick = leaveOutro;
+    const card = polaroid(o.qr, { frame: o.frame, hole: o.hole, caption: o.handle });
+    card.querySelector(".pic").classList.add("qr");
+    const text = el("div", "outro-text");
+    if (o.logo && data.logo) text.append(Object.assign(el("img", "outro-logo"), { src: url(data.logo), alt: "" }));
+    if (o.heading) text.append(el("h2", null, esc(o.heading)));
+    if (o.tagline) text.append(el("p", "tagline", esc(o.tagline)));
+    if (o.cta) text.append(el("div", "line"), el("div", "cta", esc(o.cta)));
+    outroBox.append(back, card, text);
+    toOutro.hidden = false;
+    toOutro.title = o.handle || T.outro;
+    toOutro.addEventListener("click", e => {
+      e.stopPropagation();
+      beforeOutro = location.hash;
+      location.hash = "#outro";
+    });
+  }
+
+  function render() {
+    closeNow();
+    const atOutro = location.hash === "#outro" && !toOutro.hidden;
+    document.body.classList.toggle("at-outro", atOutro);
+    if (atOutro) { document.body.classList.remove("at-home"); return; }
+    const page = introPage();
+    introBox.classList.toggle("on", page > 0);
+    intro.forEach((node, i) => node.classList.toggle("show", i === page - 1));
+    document.body.classList.toggle("at-home", !page && intro.length > 0 && /^#\/?$/.test(location.hash));
+    if (page) return;
+    const ids = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
+    const path = findPath(ids);
+    current = [];
+    stage.replaceChildren(path.length ? renderTopic(path) : renderHome());
+    stage.scrollTop = 0;
+  }
+  window.addEventListener("hashchange", render);
+
+  // ---------- 放大／縮小 ----------
+  let open = null;
+
+  function fitRect(w, h) {
+    const maxW = innerWidth * 0.96, maxH = innerHeight * 0.95;
+    const s = Math.min(maxW / w, maxH / h);
+    const W = w * s, H = h * s;
+    return { left: (innerWidth - W) / 2, top: (innerHeight - H) / 2, width: W, height: H };
+  }
+  const itemRect = ({ item, img }) => fitRect(img.naturalWidth || item.ratio * 1000, img.naturalHeight || 1000);
+  function place(node, r) {
+    Object.assign(node.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
+  }
+  // 從 from 那個框「長」到 node 目前的位置
+  function flipFrom(node, from, to) {
+    node.classList.remove("moving");
+    node.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
+    node.getBoundingClientRect();
+    node.classList.add("moving");
+    node.style.transform = "none";
+  }
+
+  // ---------- 放大鏡：滑鼠在照片上就出現，跟著移動，滾輪調倍率 ----------
+  const lens = document.getElementById("lens");
+  let zoom = 2.5;
+  let lastPointer = null;
+
+  function moveLens(node, x, y) {
+    // 用照片最後停住的位置算，不要量正在放大動畫中的元素（會量到縮圖大小）
+    const r = open && open.rect;
+    if (!r || open.node !== node || !open.ready
+        || x < r.left || x > r.left + r.width || y < r.top || y > r.top + r.height) {
+      lens.classList.remove("on");
+      return;
+    }
+    const size = lens.offsetWidth / 2;
+    lens.style.left = x + "px";
+    lens.style.top = y + "px";
+    lens.style.backgroundSize = `${r.width * zoom}px ${r.height * zoom}px`;
+    lens.style.backgroundPosition = `${-((x - r.left) * zoom - size)}px ${-((y - r.top) * zoom - size)}px`;
+    lens.classList.add("on");
+  }
+
+  function attachLens(node, item) {
+    node.classList.add("zoomable");
+    lens.style.backgroundImage = `url("${url(item.src)}")`;
+    node.addEventListener("mousemove", e => { lastPointer = [e.clientX, e.clientY]; moveLens(node, e.clientX, e.clientY); });
+    node.addEventListener("mouseleave", () => lens.classList.remove("on"));
+    node.addEventListener("wheel", e => {
+      e.preventDefault();
+      zoom = Math.min(6, Math.max(1.5, zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+      moveLens(node, e.clientX, e.clientY);
+    }, { passive: false });
+  }
+
+  // ---------- 背景音樂：循環播放；整份簡報是同一頁，換畫面不會中斷 ----------
+  const music = data.music && data.music.file ? new Audio(url(data.music.file)) : null;
+  const musicBtn = document.getElementById("music");
+  let musicHeld = false;    // 播影片時先暫停，關掉影片再接著放
+  let userPaused = false;   // 按了暫停就不要自己再開始
+  const playMusic = () => { if (music && !musicHeld && !userPaused) music.play().catch(() => {}); };
+  if (music) {
+    music.loop = true;
+    const vol = document.getElementById("volume");
+    vol.value = data.music.volume;
+    vol.title = vol.ariaLabel = T.volume;
+    const setVol = () => {
+      music.volume = vol.value / 100;
+      vol.style.setProperty("--v", vol.value + "%");
+    };
+    vol.hidden = false;
+    vol.addEventListener("input", setVol);
+    ["pointerdown", "click"].forEach(ev => vol.addEventListener(ev, e => e.stopPropagation()));
+    // 拉桿有焦點時左右鍵會拿去調音量；放開就把焦點還回去，翻頁鍵才不會被吃掉
+    vol.addEventListener("change", () => vol.blur());
+    setVol();
+    const sync = () => musicBtn.classList.toggle("playing", !music.paused);
+    music.addEventListener("play", sync);
+    music.addEventListener("pause", sync);
+    musicBtn.hidden = false;
+    musicBtn.title = T.playPause;
+    musicBtn.onclick = e => {
+      e.stopPropagation();
+      if (music.paused) { userPaused = false; musicHeld = false; music.play().catch(() => {}); }
+      else { userPaused = true; music.pause(); }
+    };
+    // 先直接播；瀏覽器擋下來（沒用「自動播音樂」開啟檔）就等第一次點畫面或按鍵
+    playMusic();
+    const kick = e => {
+      if (e.target.closest && e.target.closest("#music, #volume")) return;
+      playMusic();
+      if (!music.paused || userPaused) ["pointerdown", "keydown"].forEach(ev => document.removeEventListener(ev, kick, true));
+    };
+    ["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, kick, true));
+  }
+  const holdMusic = on => {
+    if (!music) return;
+    musicHeld = on;
+    if (on) music.pause(); else playMusic();
+  };
+
+  function openItem(i, instant) {
+    const entry = current[i];
+    if (!entry) return;
+    const { item, img, box } = entry;
+    const target = itemRect(entry);
+    const thumbRect = img.getBoundingClientRect();
+
+    let node;
+    if (item.type === "video") {
+      node = el("video", "big");
+      node.src = url(item.src);
+      if (item.thumb) node.poster = url(item.thumb);
+      node.controls = true;
+      node.playsInline = true;
+      node.addEventListener("transitionend", () => node.play().catch(() => {}), { once: true });
+    } else {
+      node = el("img", "big");
+      node.src = url(item.thumb);          // 先用縮圖，動畫不會卡
+      const hi = new Image();
+      hi.onload = () => { if (node.isConnected) node.src = hi.src; };
+      hi.src = url(item.src);
+    }
+    node.addEventListener("click", e => e.stopPropagation());
+    place(node, target);
+    document.body.append(node);
+    box.classList.add("is-open");
+    lightbox.classList.add("on");
+    if (instant) node.style.transform = "none";
+    else flipFrom(node, thumbRect, target);
+    if (instant && item.type === "video") node.play().catch(() => {});
+
+    open = { index: i, node, ready: !!instant, rect: target };
+    holdMusic(item.type === "video");
+    const state = open;
+    if (item.type === "photo") {
+      attachLens(node, item);
+      setTimeout(() => {
+        state.ready = true;
+        if (lastPointer) moveLens(node, ...lastPointer);
+      }, instant ? 0 : 480);
+    }
+  }
+
+  function close() {
+    if (!open) return;
+    const { index, node } = open;
+    const entry = current[index];
+    open = null;
+    holdMusic(false);
+    lens.classList.remove("on");
+    lightbox.classList.remove("on");
+    if (node.pause) node.pause();
+    entry.box.scrollIntoView({ block: "nearest" });
+    const to = entry.img.getBoundingClientRect();
+    const from = node.getBoundingClientRect();
+    node.classList.add("moving");
+    node.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
+    const done = () => { node.remove(); entry.box.classList.remove("is-open"); };
+    node.addEventListener("transitionend", done, { once: true });
+    setTimeout(done, 600);
+  }
+
+  function closeNow() {
+    if (!open) return;
+    open.node.remove();
+    holdMusic(false);
+    lens.classList.remove("on");
+    current[open.index]?.box.classList.remove("is-open");
+    open = null;
+    lightbox.classList.remove("on");
+  }
+
+  function step(d) {
+    if (!open || current.length < 2) return;
+    const next = (open.index + d + current.length) % current.length;
+    closeNow();
+    openItem(next, true);
+  }
+
+  lightbox.addEventListener("click", close);
+
+  // ---------- 全螢幕與鍵盤（簡報遙控器的翻頁鍵也能用） ----------
+  const toggleFs = () => document.fullscreenElement
+    ? document.exitFullscreen()
+    : document.documentElement.requestFullscreen().catch(() => {});
+  document.getElementById("fs").onclick = toggleFs;
+
+  document.addEventListener("keydown", e => {
+    if (e.target.id === "volume") return;   // 正在用鍵盤調音量，不要翻頁
+    if (e.key === "f" || e.key === "F") return toggleFs();
+    if (location.hash === "#outro") {
+      if (["Escape", "Backspace", "ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); leaveOutro(); }
+      return;
+    }
+    const page = introPage();
+    if (page) {
+      if (["ArrowRight", "PageDown", "ArrowDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); introNext(page); }
+      else if (["ArrowLeft", "PageUp", "ArrowUp"].includes(e.key)) { e.preventDefault(); introPrev(page); }
+      return;
+    }
+    if (!open && intro.length && document.body.classList.contains("at-home")
+        && ["ArrowLeft", "PageUp"].includes(e.key)) {
+      e.preventDefault();
+      location.hash = `#intro/${intro.length}`;
+      return;
+    }
+    if (open) {
+      if (e.key === "Escape" || e.key === " " && open.node.tagName !== "VIDEO") { e.preventDefault(); close(); }
+      else if (["ArrowRight", "PageDown", "ArrowDown"].includes(e.key)) { e.preventDefault(); step(1); }
+      else if (["ArrowLeft", "PageUp", "ArrowUp"].includes(e.key)) { e.preventDefault(); step(-1); }
+    } else if (e.key === "Escape" || e.key === "Backspace") {
+      const ids = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
+      if (ids.length) go(findPath(ids).slice(0, -1));
+    }
+  });
+
+  addEventListener("resize", () => {
+    if (!open) return;
+    open.rect = itemRect(current[open.index]);
+    open.node.style.transform = "none";
+    place(open.node, open.rect);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
