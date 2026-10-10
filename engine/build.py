@@ -337,9 +337,13 @@ def main():
     folders = [d for d in sorted(ROOT.iterdir(), key=lambda d: nfc(d.name))
                if d.is_dir() and not d.name.startswith((".", "_")) and nfc(d.name) not in t["hidden"]]
     names = [nfc(d.name) for d in folders]
-    for key in ("order", "hidden", "walls"):
+    # walls、labels 也可以寫子主題的資料夾名稱
+    all_names = {nfc(d.name) for d in ROOT.rglob("*") if d.is_dir()
+                 and not any(p.startswith((".", "_")) for p in d.relative_to(ROOT).parts)}
+    for key in ("order", "hidden", "walls", "labels"):
         for n in t[key]:
-            if n not in names and not (key == "hidden" and (ROOT / n).is_dir()):
+            ok = n in names if key == "order" else n in all_names
+            if not ok:
                 warn(f"topics.{key} 裡的「{n}」找不到這個資料夾")
     rank = {n: i for i, n in enumerate(t["order"])}
     folders.sort(key=lambda d: (rank.get(nfc(d.name), len(rank)), nfc(d.name)))

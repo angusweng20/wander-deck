@@ -8,10 +8,13 @@
   grid   <背景> <x0,y0,x1,y1> <輸出.png> [--scale 2]
          放大一塊區域並畫上座標格線，讓 AI 看圖找出物件的像素座標。
   cut    <背景> <x0,y0,x1,y1> <圖層.png> --scene <scene 資料夾> [--dark 200] [--min-area 60]
-         [--line x,y0,y1] [--grow 0] [--grow-down 0]
+         [--line x,y0,y1] [--grow 0] [--grow-down 0] [--poly "x,y;x,y;..."]
          把框內「比背景暗」的物件剪成去背圖層（吊燈、駱駝、人物），
          並在 <scene 資料夾>/bg.png 裡把原位置補成背景（第一次會從原圖複製一份）。
          --line 會多畫一條直線加進剪影（例如吊燈的鍊子）。
+         物件跟背景一樣暗、剪不乾淨時，改用 --poly 直接圈出物件輪廓（框只拿來定位）。
+         自動補圖糊成一團（物件壓在河岸、地平線這類交界上）：用 --patch dx,dy 從旁邊搬一塊來補，
+         dx,dy 要沿著交界線的方向，讓搬來的那塊交界線對得上。
          補背景後原位還看得到殘影：--grow 把挖的範圍往外擴幾像素，--grow-down 往下多挖（腳底影子）。
   region <背景> <多邊形 x,y;x,y;...> <圖層.png> --scene <scene 資料夾> [--feather 9]
          切一塊邊緣羽化的區域（樹葉、旗幟），原位不挖空，拿來套 breeze／flutter 效果。
@@ -105,20 +108,39 @@ def cmd_cut(a):
     bg = load(bg_path)
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     x0, y0, x1, y1 = a.box
-    m = np.zeros(gray.shape, np.uint8)
-    m[y0:y1, x0:x1] = (gray[y0:y1, x0:x1] < a.dark) * 255
-    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
-    m = fill_holes(m)
-    n, lab, st, _ = cv2.connectedComponentsWithStats(m)
-    keep = np.zeros_like(m)
-    for i in range(1, n):
-        if st[i, cv2.CC_STAT_AREA] >= a.min_area:
-            keep[lab == i] = 255
+    if a.poly:   # 物件跟背景一樣暗（例如一半在水上一半在路上）：直接用多邊形圈
+        keep = np.zeros(gray.shape, np.uint8)
+        cv2.fillPoly(keep, [np.array(a.poly, np.int32)], 255)
+    else:
+        m = np.zeros(gray.shape, np.uint8)
+        m[y0:y1, x0:x1] = (gray[y0:y1, x0:x1] < a.dark) * 255
+        m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+        m = fill_holes(m)
+        n, lab, st, _ = cv2.connectedComponentsWithStats(m)
+        keep = np.zeros_like(m)
+        for i in range(1, n):
+            if st[i, cv2.CC_STAT_AREA] >= a.min_area:
+                keep[lab == i] = 255
     if a.line:
         lx, ly0, ly1 = a.line
         cv2.line(keep, (lx, ly0), (lx, ly1), 255, 7)
     box = save_layer(a.out, src, keep)
     # 原位置補背景：先用周圍顏色填，再把附近的紙紋／沙粒細節貼回去，才不會糊成一片
+    if a.patch:   # 從旁邊搬一塊畫面來補：適合物件壓在交界線上（沿著交界線的方向搬）
+        dx, dy = a.patch
+        hole = cv2.dilate(keep, np.ones((9 + 2 * a.grow,) * 2, np.uint8))
+        src_patch = np.roll(np.roll(bg, -dy, axis=0), -dx, axis=1)
+        # 顏色校正：在洞口外圍一圈量「搬來那塊比原圖深／淺多少」，平滑地補回洞裡。
+        # 只用附近的差距，所以交界線上下（水、路）會各自校正，不會像 seamlessClone 那樣暈開
+        ring = (cv2.dilate(hole, np.ones((25, 25), np.uint8)) > 0) & (hole == 0)
+        diff = (bg.astype(np.float32) - src_patch.astype(np.float32)) * ring[..., None]
+        w = cv2.GaussianBlur(ring.astype(np.float32), (0, 0), 12)[..., None]
+        corr = cv2.GaussianBlur(diff, (0, 0), 12) / np.maximum(w, 1e-3)
+        soft = cv2.GaussianBlur(hole, (0, 0), 2).astype(np.float32)[..., None] / 255
+        out = bg.astype(np.float32) * (1 - soft) + (src_patch.astype(np.float32) + corr) * soft
+        cv2.imwrite(str(bg_path), np.clip(out, 0, 255).astype(np.uint8))
+        print(json.dumps({"src": a.out, "box": box, "bg": str(bg_path)}, ensure_ascii=False))
+        return
     k = 9 + 2 * a.grow
     hole = cv2.dilate(keep, np.ones((k, k), np.uint8))
     if a.grow_down:                             # 腳底的影子通常比物件淺，門檻抓不到：往下多挖幾格
@@ -172,6 +194,8 @@ def main():
     c.add_argument("--scene", required=True); c.add_argument("--dark", type=int, default=200)
     c.add_argument("--min-area", type=int, default=60); c.add_argument("--line", type=box_arg)
     c.add_argument("--grow", type=int, default=0); c.add_argument("--grow-down", type=int, default=0)
+    c.add_argument("--patch", type=box_arg, help="dx,dy 從 (x+dx, y+dy) 搬畫面來補，不用自動補圖")
+    c.add_argument("--poly", type=poly_arg, help="x,y;x,y;... 直接用多邊形當物件範圍（不用 --dark）")
     r = sub.add_parser("region"); r.add_argument("image"); r.add_argument("poly", type=poly_arg); r.add_argument("out")
     r.add_argument("--scene", required=True); r.add_argument("--feather", type=float, default=9)
     v = sub.add_parser("preview"); v.add_argument("layer"); v.add_argument("out")

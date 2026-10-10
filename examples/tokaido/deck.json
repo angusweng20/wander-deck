@@ -1,0 +1,147 @@
+{
+  "title": "漫遊東海道",
+  "subtitle": "跟著歌川廣重，走一趟 1833 年的東海道　·　點一個主題，從哪裡開始都可以",
+  "background": "_assets/paper.jpg",
+  "logo": null,
+  "theme": {
+    "paper": "#ece2cd",
+    "ink": "#26344e",
+    "inkSoft": "#5f6675",
+    "card": "#fbf7ee"
+  },
+  "music": {
+    "file": "_assets/music.mp3",
+    "volume": 50
+  },
+  "topics": {
+    "order": [
+      "03 驛站",
+      "01 雪",
+      "02 夜",
+      "04 山與河"
+    ],
+    "hidden": [],
+    "walls": [
+      "富士"
+    ],
+    "labels": {
+      "01 雪": "雪之旅",
+      "02 夜": "夜與月",
+      "03 驛站": "驛站風景"
+    }
+  },
+  "intro": [
+    {
+      "type": "scene",
+      "scene": "yokkaichi",
+      "title": {
+        "src": "_assets/title.png",
+        "alt": "漫遊東海道",
+        "at": [
+          64.5,
+          13,
+          24
+        ],
+        "effect": "flag"
+      }
+    },
+    {
+      "type": "scene",
+      "scene": "yokkaichi",
+      "title": {
+        "src": "_assets/title2.png",
+        "alt": "出發吧",
+        "at": [
+          66,
+          14,
+          20
+        ],
+        "effect": "flag"
+      },
+      "cards": [
+        {
+          "photo": "01 雪/蒲原・夜之雪.jpg",
+          "at": [
+            6,
+            16,
+            22
+          ],
+          "rot": -5,
+          "caption": "蒲原 · 夜之雪"
+        },
+        {
+          "photo": "02 夜/高輪・滿月.jpg",
+          "at": [
+            24,
+            30,
+            20
+          ],
+          "rot": 4,
+          "caption": "高輪 · 滿月"
+        }
+      ]
+    }
+  ],
+  "scenes": {
+    "yokkaichi": {
+      "background": "_assets/scene/bg.jpg",
+      "layers": [
+        {
+          "src": "_assets/scene/reeds.png",
+          "box": [
+            104,
+            774,
+            1703
+          ],
+          "effect": "breeze-soft"
+        },
+        {
+          "src": "_assets/scene/reeds2.png",
+          "box": [
+            314,
+            1109,
+            953
+          ],
+          "effect": "breeze-soft"
+        },
+        {
+          "src": "_assets/scene/willow.png",
+          "box": [
+            601,
+            130,
+            949
+          ],
+          "effect": "breeze"
+        },
+        {
+          "src": "_assets/scene/cloak.png",
+          "box": [
+            1825,
+            669,
+            366
+          ],
+          "effect": "flutter"
+        },
+        {
+          "src": "_assets/scene/hat.png",
+          "box": [
+            386,
+            1157,
+            113
+          ],
+          "effect": "swing",
+          "amount": 5,
+          "speed": 1.4,
+          "origin": "50% 92%"
+        }
+      ]
+    }
+  },
+  "outro": {
+    "qr": "_assets/qr.png",
+    "handle": "wander-deck",
+    "heading": "做一份你自己的",
+    "tagline": "漫遊簡報 · Wander Deck",
+    "cta": "掃描前往 GitHub"
+  }
+}
