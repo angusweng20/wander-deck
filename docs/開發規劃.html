@@ -150,6 +150,25 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
   <p class="meta">2026-09-28 · 根據園長的隨手心得＋現有程式碼整理 · 五個決定已拍板，等開工</p>
 </header>
 
+<section id="status" style="padding-top:28px">
+  <h2>目前進度（2026-10-10）</h2>
+  <p class="sec-sub">第 0 到 5b 階段都做完了，App 已經裝在園長的 Mac 上。還沒有發佈到網路上。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>項目</th><th>狀態</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>Mac App（挑照片 → 分類 → 設定 → 製作）</td><td>✅ 完成</td><td>中英文介面；裝在「應用程式」裡的 Wander Deck</td></tr>
+      <tr><td>自動分類（地點、日期）</td><td>✅ 完成</td><td>國家 → 城市；沒 GPS 的照片用前後 3 小時的照片推位置</td></tr>
+      <tr><td>AI 取名、AI 分主題</td><td>✅ 完成</td><td>用 Pi＋ChatGPT 訂閱；只送縮小、清過資訊的縮圖</td></tr>
+      <tr><td>ChatGPT 登入</td><td>⚠️ 要園長實測</td><td>程式做好、測過本機回呼；瀏覽器那段要真人登入</td></tr>
+      <tr><td>從「照片」App 挑照片</td><td>⚠️ 要園長實測</td><td>第一次會問存取權限，要真人按允許</td></tr>
+      <tr><td>風格包：水彩、浮世繪、經典</td><td>✅ 完成</td><td>日本照片自動用浮世繪；可匯出／匯入 .wdstyle</td></tr>
+      <tr><td>打包（Apple 晶片、Intel）</td><td>✅ 完成</td><td>dist/ 裡兩個壓縮檔，App 內附 Pi，不需要另外安裝</td></tr>
+      <tr><td>發佈到 GitHub</td><td>⏸ 等園長決定</td><td>要上傳才能讓大眾用一行指令安裝</td></tr>
+      <tr><td>水墨風格（中國）</td><td>⏳ 第 6 階段</td><td>還沒做</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
 <nav class="toc" aria-label="目錄">
   <a href="#heard">我聽懂的意思</a>
   <a href="#gap">已經有／還缺</a>
@@ -265,7 +284,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
   <div class="phases">
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 0 階段</span><h3>收尾＋先試水溫</h3><span class="pill s">小</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 0 階段 ✅</span><h3>收尾＋先試水溫</h3><span class="pill s">小</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>把沒存檔的改動和東海道範例存起來。實際試兩件事：①用 Pi＋你的 ChatGPT 訂閱，丟 10 張縮圖，看它能不能看圖取主題名、多快、會不會卡額度；②能不能從程式直接叫 ChatGPT 畫圖（可以的話，水彩插畫就不用你一張張手動畫）。也確認 Pi 可以被 App 從背景叫用。</dd>
         <dt>做完的樣子</dt><dd>一份試用紀錄：可行／不可行、每次要多久。<b>不可行就在這裡改方向</b>，不會白做後面的。</dd>
@@ -275,7 +294,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 1 階段</span><h3>風格包＋匯出格式</h3><span class="pill">中</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 1 階段 ✅</span><h3>風格包＋匯出格式</h3><span class="pill">中</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>把現在寫死在 <code>簡報.html</code> 的外觀（配色、紙紋、字、相框、按鈕樣式、開場）搬到 <code>styles/</code> 資料夾。現在的樣子變成「預設」包，東海道變成「浮世繪」包。<code>deck.json</code> 多一行 <code>"style": "watercolor"</code>。</dd>
         <dd style="grid-column:2"><b>定好可以輸出的格式</b>：一個風格包能打包成單一檔案（例如 <code>京都水彩.wdstyle</code>，裡面其實是壓縮檔）匯出、匯入。檔案裡固定要有作者、版本、授權（預設 CC BY 4.0）、素材出處。這就是以後社群的地基，現在先把地基打好。</dd>
@@ -284,7 +303,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 2 階段</span><h3>水彩風格包</h3><span class="pill l">中～大</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 2 階段 ✅</span><h3>水彩風格包</h3><span class="pill l">中～大</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>用 ChatGPT 畫出一整組水彩素材：開場插畫、紙紋、相框、小裝飾。我先寫好一套固定的畫圖提示詞，讓整組畫風一致。挑好的圖，我再剪成會動的圖層、配好顏色和字型。使用者不用自己剪開場動畫，直接套用。<code>CREDITS.md</code> 註明「以 ChatGPT 生成」。</dd>
         <dt>做完的樣子</dt><dd>你親眼看過開場動畫、覺得好看。</dd>
@@ -293,7 +312,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 3 階段</span><h3>自動分類</h3><span class="pill">中</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 3 階段 ✅</span><h3>自動分類</h3><span class="pill">中</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>一支小工具：讀每張照片的拍攝時間和 GPS；把位置相近的照片先聚成一堆，每堆只問 Apple 地圖一次「這是哪國哪城」（省時間、不會被擋）；分成「國家／城市」或「日期」資料夾。<b>一律複製，不動原始照片。</b>沒有 GPS 的照片（截圖、LINE 傳來的）先用前後照片的地點推，推不出來就放「未分類」。用 Swift 寫，之後 App 直接拿來用。</dd>
         <dt>做完的樣子</dt><dd>用你一趟真實旅行（500 張以上）測，分得對、速度可以接受。</dd>
@@ -302,7 +321,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 4 階段</span><h3>接上 AI 小幫手</h3><span class="pill">中</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 4 階段 ✅</span><h3>接上 AI 小幫手</h3><span class="pill">中</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>用 Pi 看每個資料夾挑出的代表縮圖（每個主題最多 12 張，不是全部送），產生主題名稱、簡報標題副標、封面照片；「指定主題」模式讓 AI 把照片分進你給的主題。依國家自動挑風格包（第一版都先用水彩）。</dd>
         <dt>做完的樣子</dt><dd>從一堆照片到一份完成的簡報，全程不用手改任何設定檔。</dd>
@@ -310,7 +329,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 5 階段</span><h3>Mac App</h3><span class="pill l">大</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 5 階段 ✅</span><h3>Mac App</h3><span class="pill l">大</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>把上面的零件串成畫面：登入 → 挑照片（「照片」App 優先，也能拖資料夾進來）→ 分類（可以拖拉調整）→ 主題 → 簡單設定 → 開始製作（進度條）→ 打開簡報。第一次打開時清楚告訴使用者「照片會縮小、清掉位置後才給 ChatGPT 看」。以陌生人第一次用也看得懂為標準來設計。</dd>
         <dt>做完的樣子</dt><dd>你自己從零做出一份簡報，過程中不用問任何人。</dd>
@@ -319,7 +338,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
 
     <div class="phase">
-      <div class="phase-head"><span class="id">第 5b 階段</span><h3>公開下載準備</h3><span class="pill l">大</span><span class="pill mvp">第一版</span></div>
+      <div class="phase-head"><span class="id">第 5b 階段 ✅</span><h3>公開下載準備</h3><span class="pill l">大</span><span class="pill mvp">第一版</span></div>
       <dl>
         <dt>做什麼</dt><dd>
           <ul class="plain" style="margin-top:4px">
@@ -468,7 +487,7 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-si
 </section>
 
 <footer>
-  漫遊簡報 Wander Deck · 開發規劃 · 2026-09-28（決定已併入，10-10 更新）<br>
+  漫遊簡報 Wander Deck · 開發規劃 · 2026-09-28（決定已併入，10-10 第 0–5b 階段完成）<br>
   依據：園長的隨手心得、<span class="mono">skills/wander-deck/SKILL.md</span>、<span class="mono">engine/</span> 程式碼、Pi 0.85.1 說明、OpenAI 對第三方工具的公開表態（MindStudio、Manifest 整理的報導）。
 </footer>
 

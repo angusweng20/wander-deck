@@ -15,6 +15,8 @@ description: 漫遊簡報（Wander Deck）——把一個裝滿照片的資料�
 - 一個資料夾就是一份簡報；裡面每個子資料夾是一個「主題」，可以再分一層子主題。
 - 打開後：開場頁（可選，照順序翻）→ 主畫面（主題小卡，想點哪個就點哪個）→ 主題內的照片牆 → 點照片放大、有放大鏡。
 - 可選：背景音樂（循環、換頁不中斷、右下角播放鈕和音量拉桿）、展示牆（幾張照片並排放大、不能點）、結尾 QR code 頁（左下角按鈕進入）、開場動畫（插畫裡的東西會動、標題像旗子飄）。
+- **風格包**（`_style/`）一次決定配色、背景、字型和整個開場動畫。內建：`watercolor` 水彩旅行（預設）、`ukiyoe` 浮世繪（日本）、`classic` 經典相紙。格式見 `$WD/docs/style-pack.md`。
+- 使用者如果只是要「挑照片、自動分好、做出來」，推薦他用 **Mac App**（`/Applications/Wander Deck.app`，安裝見 README）。你要做的是 App 做不到的客製（自己的插畫開場、特殊版面）。
 - 全部是本機檔案，整個資料夾複製給別人就能看，不用網路、不用安裝。
 
 ## 簡報資料夾的結構
@@ -28,6 +30,7 @@ description: 漫遊簡報（Wander Deck）——把一個裝滿照片的資料�
   01 第一個主題/ …照片、影片
   02 第二個主題/子主題A/ …
   _assets/                 ← 背景、LOGO、音樂、開場圖（底線開頭的資料夾不會變主題）
+  _style/                  ← 風格包（deck.json 的 "style" 指到它）
   _wander/                 ← 產生出來的東西（build.py、縮圖、大圖、data.js），可刪掉重建
 ```
 
@@ -48,10 +51,21 @@ description: 漫遊簡報（Wander Deck）——把一個裝滿照片的資料�
 
 ### 2. 建立
 
+**最快的路（照片已經在某個資料夾、想自動分類）**：用 App 內附的命令列工具，一步做完
+（讀 GPS／日期 → 分主題 → 可選 AI 取名 → 套風格 → 產生簡報；原始照片只複製不移動）：
 ```bash
-$WD/scripts/new_deck.sh "<簡報資料夾>" "<標題>"
+WANDER=/Applications/Wander\ Deck.app/Contents/MacOS/wander   # 沒裝 App 就用 $WD/app 自己編：swift build --product wander
+"$WANDER" make --by place --ai --out "<放簡報的資料夾>" "<照片資料夾>"   # --by date／ai；--style ukiyoe；--title 標題
+"$WANDER" login-status                                                    # AI 需要 ChatGPT 登入（Pi）
+```
+`--ai` 會把縮小、清過拍攝資訊的縮圖送給 ChatGPT（用使用者自己的訂閱）。**使用者的私人照片要先問過他才能加 `--ai`。**
+
+**手動的路（要細調版面）**：
+```bash
+$WD/scripts/new_deck.sh --style watercolor "<簡報資料夾>" "<標題>"
 ```
 然後把照片按主題放進子資料夾、素材放 `_assets/`，編輯 `deck.json`（格式見 `$WD/docs/deck-json.md`）。
+有 `"style"` 而且沒寫 `intro` 時，開場直接用風格包的版型（標題、副標、拍立得自動填）。
 
 ### 3. 產生並檢查
 
@@ -91,7 +105,9 @@ $WD/scripts/preview.sh "<簡報資料夾>" "#outro" /tmp/o.png             # 結
 | 開場加幾頁（Keynote／Canva 做好的） | 匯出 PNG 放 `_assets/`，`intro` 加 `{"type": "image", "src": "..."}` |
 | 開場要會動 | 見下面「開場動畫」 |
 | 結尾放 IG／網站 QR code | QR 圖放 `_assets/`，先 `$PY $ST qr <圖>` 解碼確認網址對，再設定 `outro` |
-| 介面文字改英文 | `text`（見 docs/deck-json.md） |
+| 介面文字改英文 | `"lang": "en"`（按鈕整套變英文）；個別句子用 `text` |
+| 換整體風格 | `$WD/scripts/new_deck.sh --upgrade --style ukiyoe "<簡報資料夾>"`，再跑 build |
+| 想把自己的插畫做成可分享的風格 | 照「開場動畫」做好圖層，整理成 `styles/<id>/`，`python3 $WD/scripts/style_pack.py check／export` |
 
 ## 開場動畫（最花工夫，照這個順序）
 
@@ -122,6 +138,13 @@ $WD/scripts/preview.sh "<簡報資料夾>" "#outro" /tmp/o.png             # 結
    可以用 OpenCV `matchTemplate` 把標題圖在 Keynote 匯出圖上找出位置再換算百分比。
 8. 同一個 scene 可以給好幾頁用（背景一樣、標題和拍立得不同）。
 
+## 做風格包的素材
+
+- 插畫可以用 Codex（ChatGPT 訂閱）畫：`codex exec --skip-git-repo-check --sandbox workspace-write "用圖片生成工具畫一張 16:9 水彩插畫⋯⋯存成 x.png"`，一張約 1 分鐘、寬 1672。
+  提示詞只描述畫風，不要點名在世畫家；要在畫面上留一大片空白放標題；要會動的東西（燈籠、熱氣球）放在單純的天空前面，比較好剪。
+- 剪圖層後原位的補圖如果糊成一團（物件壓在樹葉上），改用 OpenCV `cv2.inpaint`（TELEA）把所有圖層的範圍一起補，
+  再模擬左右擺動時的樣子檢查有沒有破綻——圖層會蓋住大部分補過的地方。
+
 ## 踩過的坑（不要重蹈覆轍）
 
 - **標題飄動不要改成「切直條」或 SVG 扭曲**：切直條會有細細的接縫線（條數加倍反而更糟），SVG 扭曲會把字形扭歪。引擎裡的 canvas 逐像素畫法是試到最後唯一合格的。
@@ -134,6 +157,9 @@ $WD/scripts/preview.sh "<簡報資料夾>" "#outro" /tmp/o.png             # 結
 - 下載的音樂檔先看大小，**0 KB 就是下載失敗**（build.py 會警告）。
 - 使用者說的資料夾名稱可能已經被他自己改過了：**動手前先 `ls` 看現況**。
 - 刪東西一律用 `trash`（丟垃圾桶，救得回來），不要 `rm` 使用者的照片。
+- **Apple 地圖的「城市」**：東京、台北會回傳「區」（杉並區、信義區）。程式用 CLGeocoder 的上一層（東京、臺北市）；香港、澳門、新加坡整個算一個城市。
+- **ChatGPT 訂閱登入不能用 mini 模型**（會報 not supported），Pi 一律用 `gpt-5.5`。
+- **專案在 iCloud 同步的資料夾時**，編譯和簽章要在暫存資料夾做（腳本已處理），不然 codesign 會失敗。
 
 ## 回報使用者時
 
