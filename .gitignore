@@ -3,3 +3,6 @@ __pycache__/
 .preview.html
 # 簡報資料夾（有使用者的照片）不要進版控
 decks/
+# 編譯、打包產物
+app/.build/
+dist/
