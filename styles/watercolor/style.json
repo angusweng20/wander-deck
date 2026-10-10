@@ -1,0 +1,48 @@
+{
+  "format": "wander-style/1",
+  "id": "watercolor",
+  "name": { "zh-Hant": "水彩旅行", "en": "Watercolor Journey" },
+  "version": "1.0.0",
+  "author": "Wander Deck",
+  "license": "CC-BY-4.0",
+  "description": {
+    "zh-Hant": "清透的水彩山城當開場：燈籠輕輕搖、熱氣球慢慢飄、樹葉和草地隨風擺動。適合各地旅行。",
+    "en": "A light watercolor hillside opens the deck: lanterns sway, a balloon drifts, leaves and grass move in the breeze. Fits any trip."
+  },
+  "countries": [],
+  "preview": "preview.jpg",
+  "theme": {
+    "paper": "#f6f2ea",
+    "ink": "#3d4b5c",
+    "inkSoft": "#76828f",
+    "card": "#fffdf9",
+    "serif": "\"Songti TC\", \"Noto Serif TC\", \"Hiragino Mincho ProN\", serif"
+  },
+  "background": "paper.jpg",
+  "css": "style.css",
+  "scenes": {
+    "main": {
+      "background": "scene/bg.jpg",
+      "layers": [
+        { "src": "scene/meadow.png", "box": [0, 571, 748], "effect": "breeze-soft" },
+        { "src": "scene/canopy.png", "box": [0, 0, 754], "effect": "breeze" },
+        { "src": "scene/balloon.png", "box": [579, 320, 56], "effect": "float", "amount": 18, "speed": 7 },
+        { "src": "scene/lantern-right.png", "box": [332, 157, 80], "effect": "swing", "amount": 2.2, "speed": 3.6, "origin": "50% 0", "delay": -1.2 },
+        { "src": "scene/lantern-mid.png", "box": [265, 175, 69], "effect": "swing", "amount": 2.6, "speed": 3.1, "origin": "50% 0", "delay": -0.4 },
+        { "src": "scene/lantern-big.png", "box": [159, 211, 111], "effect": "swing", "amount": 1.8, "speed": 4.2, "origin": "50% 0", "delay": -2.3 }
+      ]
+    }
+  },
+  "intro": [
+    {
+      "type": "scene", "scene": "main",
+      "title": { "text": "{title}", "at": [50, 9, 44], "maxHeight": 13, "align": "center", "effect": "flag",
+                 "font": "600 {size}px \"Songti TC\", \"Noto Serif TC\", serif", "color": "#3d4b5c",
+                 "glow": "rgba(255,253,249,.95)", "spacing": "6px" },
+      "texts": [ { "text": "{subtitle}", "at": [50, 24.5, 44], "size": 1.3, "align": "center", "color": "#55636f" } ],
+      "cards": "auto",
+      "cardSlots": [ { "at": [57, 40, 14], "rot": -5 }, { "at": [73, 45, 13], "rot": 4 } ]
+    }
+  ],
+  "credits": "CREDITS.md"
+}

@@ -28,6 +28,7 @@ window.WANDER = {
     ],
     "effect": "flag"
    },
+   "texts": [],
    "cards": []
   },
   {
@@ -64,7 +65,8 @@ window.WANDER = {
      "rot": 4,
      "caption": "高輪 · 滿月"
     }
-   ]
+   ],
+   "texts": []
   }
  ],
  "scenes": {
@@ -134,6 +136,7 @@ window.WANDER = {
   "cta": "掃描前往 GitHub"
  },
  "text": {},
+ "css": null,
  "topics": [
   {
    "id": "03 驛站",

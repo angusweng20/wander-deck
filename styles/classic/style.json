@@ -1,0 +1,25 @@
+{
+  "format": "wander-style/1",
+  "id": "classic",
+  "name": {
+    "zh-Hant": "經典相紙",
+    "en": "Classic Prints"
+  },
+  "version": "1.0.0",
+  "author": "Wander Deck",
+  "license": "CC-BY-4.0",
+  "description": {
+    "zh-Hant": "米色紙張配拍立得相框，沒有開場動畫。什麼旅行都適合。",
+    "en": "Warm paper and polaroid prints, no animated intro. Fits any trip."
+  },
+  "countries": [],
+  "theme": {
+    "paper": "#f4ebdc",
+    "ink": "#4a3a2b",
+    "inkSoft": "#7a6552",
+    "card": "#fffdf8"
+  },
+  "intro": [],
+  "credits": "CREDITS.md",
+  "preview": "preview.jpg"
+}

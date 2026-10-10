@@ -9,6 +9,7 @@
       簡報.html            ← 打開就是簡報
       01 某個主題/          ← 一個資料夾＝一個主題，可以再分一層子主題
       _assets/             ← 背景、LOGO、音樂等素材（底線開頭的資料夾不會變成主題）
+      _style/              ← 風格包（deck.json 寫 "style": "<id>" 時使用；格式見 docs/style-pack.md）
       _wander/             ← 這支程式產生的東西，可以整個刪掉重建
 
 用法：
@@ -27,6 +28,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent          # _wander
 ROOT = HERE.parent                              # 簡報資料夾
 CONFIG = ROOT / "deck.json"
+STYLE_DIR = ROOT / "_style"
+STYLE_FORMAT = "wander-style/1"
 THUMB = HERE / "thumbs"
 LARGE = HERE / "large"
 
@@ -48,6 +51,7 @@ DEFAULTS = {
     "scenes": {},
     "outro": None,
     "text": {},
+    "style": None,
 }
 
 warnings = []
@@ -240,11 +244,13 @@ def remove_unused(folder, used):
 
 def load_config():
     cfg = json.loads(json.dumps(DEFAULTS))
+    cfg["_user_keys"] = set()
     if CONFIG.exists():
         try:
             user = json.loads(CONFIG.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
             sys.exit(f"deck.json 格式錯誤（第 {e.lineno} 行第 {e.colno} 個字）：{e.msg}")
+        cfg["_user_keys"] = set(user)
         for k, v in user.items():
             if isinstance(v, dict) and isinstance(cfg.get(k), dict):
                 cfg[k].update(v)
@@ -257,6 +263,69 @@ def load_config():
         t[k] = [nfc(x) for x in t.get(k, [])]
     t["labels"] = {nfc(k): v for k, v in t.get("labels", {}).items()}
     return cfg
+
+
+# ---------- 風格包 ----------
+
+def style_path(p):
+    return f"_style/{p}" if p else None
+
+
+def load_style(cfg):
+    """deck.json 的 "style" 指到 _style/ 裡的風格包：把它的配色、背景、開場當成預設值。
+    deck.json 自己有寫的設定一律優先。"""
+    want = cfg.get("style")
+    cfg["css"] = None
+    if not want:
+        return
+    meta_file = STYLE_DIR / "style.json"
+    if not meta_file.is_file():
+        warn(f"style 設成「{want}」，但簡報資料夾裡沒有 _style/style.json，先用預設外觀")
+        return
+    try:
+        st = json.loads(meta_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        warn(f"_style/style.json 格式錯誤（第 {e.lineno} 行）：{e.msg}，先用預設外觀")
+        return
+    if st.get("format") != STYLE_FORMAT:
+        warn(f"_style/style.json 的 format 應該是「{STYLE_FORMAT}」")
+    if st.get("id") != want:
+        warn(f"deck.json 要的是風格「{want}」，但 _style 裡裝的是「{st.get('id')}」")
+    user = cfg["_user_keys"]
+
+    theme = dict(st.get("theme") or {})
+    theme.update(cfg["theme"] if "theme" in user else {})
+    cfg["theme"] = theme
+    if not cfg.get("background") and st.get("background"):
+        cfg["background"] = style_path(st["background"])
+    if st.get("css"):
+        cfg["css"] = check_asset(style_path(st["css"]), "風格包的 css")
+    if "music" not in user and st.get("music"):
+        cfg["music"] = {"file": style_path(st["music"].get("file")), "volume": st["music"].get("volume", 50)}
+
+    scenes = {}
+    for name, sc in (st.get("scenes") or {}).items():
+        sc = json.loads(json.dumps(sc))
+        sc["background"] = style_path(sc.get("background"))
+        for layer in sc.get("layers", []):
+            layer["src"] = style_path(layer.get("src"))
+        scenes[name] = sc
+    scenes.update(cfg["scenes"] if "scenes" in user else {})
+    cfg["scenes"] = scenes
+
+    if "intro" not in user or cfg["intro"] == "style":
+        pages = json.loads(json.dumps(st.get("intro") or []))
+        for p in pages:
+            if isinstance(p, dict) and p.get("type", "image") == "image" and p.get("src"):
+                p["src"] = style_path(p["src"])
+            for c in (p.get("cards") if isinstance(p.get("cards"), list) else []):
+                if c.get("frame"):
+                    c["frame"] = style_path(c["frame"])
+        cfg["intro"] = pages
+
+
+def fill_text(s, cfg):
+    return str(s).replace("{title}", cfg["title"] or "").replace("{subtitle}", cfg["subtitle"] or "")
 
 
 def check_asset(path, what):
@@ -301,12 +370,20 @@ def resolve_assets(cfg):
                 warn(f"intro 第 {i} 頁：scene「{p.get('scene')}」沒有設定或缺背景，這頁略過")
                 continue
             if p.get("title"):
-                p["title"]["src"] = check_asset(p["title"].get("src"), f"intro 第 {i} 頁的標題圖")
-            for c in p.get("cards", []):
-                c["photo"] = check_asset(c.get("photo"), f"intro 第 {i} 頁的拍立得照片")
-                if c.get("frame"):
-                    c["frame"] = check_asset(c["frame"], f"intro 第 {i} 頁的拍立得相框")
-            p["cards"] = [c for c in p.get("cards", []) if c["photo"]]
+                if p["title"].get("text"):          # 文字標題：瀏覽器自己畫，不用先做圖
+                    p["title"]["text"] = fill_text(p["title"]["text"], cfg)
+                    p["title"].pop("src", None)
+                else:
+                    p["title"]["src"] = check_asset(p["title"].get("src"), f"intro 第 {i} 頁的標題圖")
+            for tx in p.get("texts", []):
+                tx["text"] = fill_text(tx.get("text", ""), cfg)
+            p["texts"] = [tx for tx in p.get("texts", []) if tx["text"].strip()]
+            if p.get("cards") != "auto":            # "auto"：之後用各主題的封面照片自動填
+                for c in p.get("cards", []):
+                    c["photo"] = check_asset(c.get("photo"), f"intro 第 {i} 頁的拍立得照片")
+                    if c.get("frame"):
+                        c["frame"] = check_asset(c["frame"], f"intro 第 {i} 頁的拍立得相框")
+                p["cards"] = [c for c in p.get("cards", []) if c["photo"]]
             pages.append(p)
         else:
             warn(f"intro 第 {i} 頁：不認得的 type「{p['type']}」")
@@ -321,6 +398,8 @@ def resolve_assets(cfg):
 
 def resized_asset(path, px):
     """開場用的照片也可能帶 GPS：一律另存一份清乾淨的。"""
+    if path.startswith("_wander/"):            # 已經是清過、縮過的圖
+        return path
     src = ROOT / path
     if src.suffix.lower() not in PHOTO_EXT or src.suffix.lower() == ".png":
         return path
@@ -328,9 +407,23 @@ def resized_asset(path, px):
     return rel(out) if make_photo(src, out, px, 88) else path
 
 
+def fill_auto_cards(cfg, topics):
+    """"cards": "auto"：從前幾個主題各拿一張照片當拍立得，標題寫主題名稱。"""
+    for p in cfg["intro"]:
+        if p.get("cards") != "auto":
+            continue
+        slots, cards = p.pop("cardSlots", []), []
+        picks = [(t["name"], next((i for i in all_items(t) if i["type"] == "photo"), None)) for t in topics]
+        picks = [(n, i) for n, i in picks if i]
+        for slot, (name, item) in zip(slots, picks):
+            cards.append(dict(slot, photo=item["src"], caption=slot.get("caption", name)))
+        p["cards"] = cards
+
+
 def main():
     check_only = "--check" in sys.argv
     cfg = load_config()
+    load_style(cfg)
     resolve_assets(cfg)
 
     t = cfg["topics"]
@@ -345,6 +438,7 @@ def main():
             ok = n in names if key == "order" else n in all_names
             if not ok:
                 warn(f"topics.{key} 裡的「{n}」找不到這個資料夾")
+    cfg.pop("_user_keys", None)
     rank = {n: i for i, n in enumerate(t["order"])}
     folders.sort(key=lambda d: (rank.get(nfc(d.name), len(rank)), nfc(d.name)))
 
@@ -363,12 +457,13 @@ def main():
         used = {i[k] for tp in topics for i in all_items(tp) for k in ("thumb", "src") if i.get(k)}
         remove_unused(THUMB, used)
         remove_unused(LARGE, used)
+        fill_auto_cards(cfg, topics)
         for p in cfg["intro"]:
             for c in p.get("cards", []):
                 c["photo"] = resized_asset(c["photo"], 1600)
 
         data = {k: cfg[k] for k in ("title", "subtitle", "lang", "theme", "background", "logo",
-                                     "music", "intro", "scenes", "outro", "text")}
+                                     "music", "intro", "scenes", "outro", "text", "css")}
         data["topics"] = topics
         (HERE / "data.js").write_text(
             "window.WANDER = " + json.dumps(data, ensure_ascii=False, indent=1) + ";\n", encoding="utf-8")

@@ -7,7 +7,9 @@
 {
   "title": "世界某處分享會",                     // 主畫面大標、瀏覽器分頁名稱
   "subtitle": "點一個主題，想從哪裡開始都可以",   // 主畫面副標，不要就給 ""
-  "lang": "zh-Hant-TW",
+  "lang": "zh-Hant-TW",                         // "en" 的話，介面按鈕會變英文
+  "style": "watercolor",                        // 風格包（裝在 _style/）。配色、背景、開場都用它的，
+                                                // 下面自己寫的設定會蓋過風格包。格式見 docs/style-pack.md
   "background": "_assets/background.jpg",       // 主畫面和主題頁的全螢幕背景
   "logo": "_assets/logo.png",                   // 主畫面標題上方的 LOGO（建議去背 PNG）
   "theme": {                                    // 顏色，全部可省略
@@ -71,6 +73,22 @@
   }
 }
 ```
+
+## 用風格包時
+
+`"style"` 有設定、而且 deck.json **沒有寫 `intro`** 時，開場頁直接用風格包的版型：標題、副標自動填入，
+拍立得自動放前幾個主題的照片。想自己排開場就照常寫 `intro`；想改回用風格包的開場就寫 `"intro": "style"`。
+
+開場頁的標題也可以不用圖、直接寫字（風格包就是這樣用的）：
+
+```jsonc
+"title": { "text": "京都・秋日", "at": [50, 9, 44], "maxHeight": 13, "align": "center",
+           "font": "600 {size}px \"Songti TC\", serif", "color": "#3d4b5c", "effect": "flag" },
+"texts": [ { "text": "五天四夜", "at": [50, 24, 44], "size": 1.3, "align": "center" } ],
+"cards": "auto", "cardSlots": [ { "at": [57, 40, 14], "rot": -5 } ]
+```
+
+欄位意思見 [style-pack.md](style-pack.md#開場頁的版型欄位)。
 
 ## 圖層 `layers` 欄位
 

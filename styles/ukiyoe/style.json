@@ -1,0 +1,139 @@
+{
+  "format": "wander-style/1",
+  "id": "ukiyoe",
+  "name": {
+    "zh-Hant": "浮世繪",
+    "en": "Ukiyo-e"
+  },
+  "version": "1.0.0",
+  "author": "Wander Deck",
+  "license": "CC-BY-4.0",
+  "description": {
+    "zh-Hant": "歌川廣重〈四日市・三重川〉當開場，蘆葦和柳樹會隨風擺動。日本旅行的預設風格。",
+    "en": "Opens with Hiroshige's Yokkaichi print; reeds and willow sway in the wind. Default for trips to Japan."
+  },
+  "countries": [
+    "JP"
+  ],
+  "preview": "scene/bg.jpg",
+  "theme": {
+    "paper": "#ece2cd",
+    "ink": "#26344e",
+    "inkSoft": "#5f6675",
+    "card": "#fbf7ee",
+    "serif": "\"Hiragino Mincho ProN\", \"Songti TC\", \"Noto Serif TC\", serif"
+  },
+  "background": "paper.jpg",
+  "music": {
+    "file": "music.mp3",
+    "volume": 50
+  },
+  "scenes": {
+    "main": {
+      "background": "scene/bg.jpg",
+      "layers": [
+        {
+          "src": "scene/reeds.png",
+          "box": [
+            104,
+            774,
+            1703
+          ],
+          "effect": "breeze-soft"
+        },
+        {
+          "src": "scene/reeds2.png",
+          "box": [
+            314,
+            1109,
+            953
+          ],
+          "effect": "breeze-soft"
+        },
+        {
+          "src": "scene/willow.png",
+          "box": [
+            601,
+            130,
+            949
+          ],
+          "effect": "breeze"
+        },
+        {
+          "src": "scene/cloak.png",
+          "box": [
+            1825,
+            669,
+            366
+          ],
+          "effect": "flutter"
+        },
+        {
+          "src": "scene/hat.png",
+          "box": [
+            386,
+            1157,
+            113
+          ],
+          "effect": "swing",
+          "amount": 5,
+          "speed": 1.4,
+          "origin": "50% 92%"
+        }
+      ]
+    }
+  },
+  "intro": [
+    {
+      "type": "scene",
+      "scene": "main",
+      "title": {
+        "text": "{title}",
+        "at": [
+          54,
+          10,
+          33
+        ],
+        "maxHeight": 13,
+        "align": "center",
+        "effect": "flag",
+        "font": "600 {size}px \"Hiragino Mincho ProN\", \"Songti TC\", serif",
+        "color": "#26344e",
+        "glow": "rgba(251,247,238,.9)"
+      },
+      "texts": [
+        {
+          "text": "{subtitle}",
+          "at": [
+            54,
+            25,
+            33
+          ],
+          "size": 1.25,
+          "align": "center",
+          "color": "#3a4458"
+        }
+      ],
+      "cards": "auto",
+      "cardSlots": [
+        {
+          "at": [
+            6,
+            16,
+            22
+          ],
+          "rot": -5
+        },
+        {
+          "at": [
+            24,
+            30,
+            20
+          ],
+          "rot": 4
+        }
+      ]
+    }
+  ],
+  "credits": "CREDITS.md"
+}

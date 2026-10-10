@@ -335,6 +335,7 @@
   /* ---------- 開場動畫頁（scene） ---------- */
   .scene { overflow: hidden; }
   .scene-box {
+    container-type: inline-size;              /* 開場文字用 cqw，跟著畫面一起縮放 */
     position: absolute; left: 50%; top: 50%;
     width: max(100vw, calc(100vh * var(--ar)));
     aspect-ratio: var(--ar);
@@ -369,6 +370,9 @@
   .title > img { display: block; width: 100%; }
   .title.flag > img { visibility: hidden; }
   .title canvas { position: absolute; left: 0; top: -6%; width: 100%; height: 112%; }
+
+  /* 開場的一般文字（副標等），字級用 cqw＝畫面寬度的 % */
+  .scene-text { white-space: pre-line; line-height: 1.5; color: var(--ink); font-family: var(--serif); }
 
   /* 拍立得：沒給相框圖就用 CSS 畫一張 */
   .card { aspect-ratio: 1122 / 1402; }
@@ -485,13 +489,21 @@
   const stage = document.getElementById("stage");
   const lightbox = document.getElementById("lightbox");
 
-  // 介面文字：deck.json 的 "text" 可以蓋掉任何一句（例如換成英文）
-  const T = Object.assign({
+  // 介面文字：lang 是英文就用英文；deck.json 的 "text" 可以再蓋掉任何一句
+  const ZH = {
     home: "← 主畫面", toIntro: "← 開場", fullscreen: "全螢幕", back: "← 返回",
     places: n => `${n} 個地方`, photos: n => `${n} 張`, videos: n => `${n} 部影片`,
     volume: "音量", playPause: "播放／暫停音樂", outro: "QR code",
     missing: "找不到簡報資料。<br>請先點兩下資料夾裡的「更新簡報.command」。",
-  }, data && data.text || {});
+  };
+  const EN = {
+    home: "← Home", toIntro: "← Intro", fullscreen: "Fullscreen", back: "← Back",
+    places: n => `${n} places`, photos: n => `${n} photos`, videos: n => n === 1 ? "1 video" : `${n} videos`,
+    volume: "Volume", playPause: "Play / pause music", outro: "QR code",
+    missing: "No presentation data yet.<br>Double-click the “Update” .command file in this folder first.",
+  };
+  const lang = (data && data.lang || navigator.language || "zh").toLowerCase();
+  const T = Object.assign({}, lang.startsWith("en") ? EN : ZH, data && data.text || {});
   const say = (k, n) => typeof T[k] === "function" ? T[k](n) : String(T[k]).replace("{n}", n);
 
   // 檔名裡有中文、空白、& 等字元，要逐段編碼
@@ -523,9 +535,14 @@
   }
   document.title = data.title;
   document.documentElement.lang = data.lang || "zh-Hant-TW";
-  const themeVars = { paper: "--paper", ink: "--ink", inkSoft: "--ink-soft", card: "--card" };
+  const themeVars = { paper: "--paper", ink: "--ink", inkSoft: "--ink-soft", card: "--card",
+                      accent: "--accent", serif: "--serif", sans: "--sans" };
   Object.entries(data.theme || {}).forEach(([k, v]) => themeVars[k] && document.documentElement.style.setProperty(themeVars[k], v));
   if (data.background) document.body.style.setProperty("--bg", `url("${url(data.background)}")`);
+  if (data.css) {   // 風格包自己的樣式表，疊在預設樣式後面
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: url(data.css) });
+    document.head.append(link);
+  }
   document.getElementById("to-intro").textContent = T.toIntro;
   document.getElementById("fs").textContent = T.fullscreen;
 
@@ -585,6 +602,40 @@
     return cv;
   }
 
+  // 文字標題：把字畫成一張圖，之後跟圖片標題一樣可以像旗子飄
+  // at = [左%, 上%, 最寬%]；maxHeight = 最高佔畫面高度幾 %；align 決定在最寬範圍裡靠哪邊
+  function textTitle(t, holder, ar) {
+    const img = el("img");
+    img.alt = t.text;
+    const size = 180;
+    const css = getComputedStyle(document.documentElement);
+    const font = (t.font || `600 {size}px ${css.getPropertyValue("--serif")}`).replace("{size}", size);
+    const draw = () => {
+      const cv = document.createElement("canvas"), ctx = cv.getContext("2d");
+      ctx.font = font;
+      if ("letterSpacing" in ctx && t.spacing) ctx.letterSpacing = t.spacing;
+      const lines = String(t.text).split("\n");
+      const w = Math.max(...lines.map(l => ctx.measureText(l).width));
+      const pad = size * .2, lh = size * 1.3;
+      cv.width = Math.ceil(w + pad * 2);
+      cv.height = Math.ceil(lh * lines.length + pad);
+      ctx.font = font;
+      if ("letterSpacing" in ctx && t.spacing) ctx.letterSpacing = t.spacing;
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = t.color || css.getPropertyValue("--ink").trim() || "#333";
+      if (t.glow) { ctx.shadowColor = t.glow; ctx.shadowBlur = size * .18; }
+      lines.forEach((l, i) => ctx.fillText(l, pad, pad / 2 + lh * (i + .5)));
+      const aspect = cv.width / cv.height;
+      const [l, top, maxW] = t.at || [20, 30, 60];
+      const width = Math.min(maxW, aspect * (t.maxHeight || 18) / ar);
+      const shift = { center: .5, right: 1 }[t.align] || 0;
+      placeAt(holder, [l + (maxW - width) * shift, top, width]);
+      img.src = cv.toDataURL();
+    };
+    (document.fonts ? document.fonts.load(font, t.text).catch(() => {}) : Promise.resolve()).then(draw);
+    return img;
+  }
+
   // 拍立得：有相框圖就把照片墊在框後面的洞裡；沒有就用 CSS 畫的相紙
   function polaroid(photoSrc, c = {}) {
     const card = el("div", "card");
@@ -637,12 +688,24 @@
       card.style.transform = `rotate(${c.rot || 0}deg)`;
       box.append(card);
     });
-    if (p.title && p.title.src) {
+    (p.texts || []).forEach(tx => {
+      const node = el("div", "scene-text", esc(tx.text));
+      placeAt(node, tx.at || [10, 70, 40]);
+      Object.assign(node.style, { fontSize: (tx.size || 1.6) + "cqw", textAlign: tx.align || "left" });
+      if (tx.font) node.style.fontFamily = tx.font;
+      if (tx.color) node.style.color = tx.color;
+      box.append(node);
+    });
+    if (p.title && (p.title.src || p.title.text)) {
       const title = el("div", "title");
-      placeAt(title, p.title.at || [20, 30, 60]);
-      const timg = el("img");
-      timg.src = url(p.title.src);
-      timg.alt = p.title.alt || "";
+      let timg;
+      if (p.title.text) timg = textTitle(p.title, title, W / H);
+      else {
+        placeAt(title, p.title.at || [20, 30, 60]);
+        timg = el("img");
+        timg.src = url(p.title.src);
+        timg.alt = p.title.alt || "";
+      }
       title.append(timg);
       if ((p.title.effect || "flag") === "flag") {
         title.classList.add("flag");
