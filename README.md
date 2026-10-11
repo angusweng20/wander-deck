@@ -76,7 +76,7 @@ styles/     內建風格包
 scripts/    package_app.sh 打包、install.sh 安裝、test.sh 測試、style_pack.py 風格包工具、
             new_deck.sh 建立簡報、preview.sh 截圖、scene_tool.py 拆開場動畫圖層
 skills/     給 AI 的操作手冊
-docs/       deck.json 設定、風格包格式、開發規劃
+docs/       deck.json 設定、風格包格式
 examples/   範例簡報「漫遊東海道」（素材全是公眾領域）
 ```
 

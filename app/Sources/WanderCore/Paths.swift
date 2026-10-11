@@ -20,10 +20,20 @@ public enum Paths {
            FileManager.default.fileExists(atPath: main.appendingPathComponent("engine/deck.html").path) {
             return main
         }
-        // 開發中：這個檔案在 app/Sources/WanderCore/，往上三層是專案根目錄
-        return URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent()
+        // 開發中（swift build／swift test）：從執行檔的位置往上找專案根目錄（有 engine/deck.html 的那層）。
+        // 不用 #filePath：那會把編譯者電腦上的完整路徑寫進執行檔裡。
+        let starts = [exe.deletingLastPathComponent(), Bundle.main.bundleURL,
+                      URL(fileURLWithPath: FileManager.default.currentDirectoryPath)]
+        for start in starts {
+            var dir = start
+            for _ in 0..<12 {
+                if FileManager.default.fileExists(atPath: dir.appendingPathComponent("engine/deck.html").path) { return dir }
+                let up = dir.deletingLastPathComponent()
+                if up.path == dir.path { break }
+                dir = up
+            }
+        }
+        return bundled
     }()
 
     public static var engine: URL { resources.appendingPathComponent("engine") }

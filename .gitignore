@@ -6,3 +6,6 @@ decks/
 # 編譯、打包產物
 app/.build/
 dist/
+
+# 內部規劃筆記（只留在本機，不上傳）
+notes/
